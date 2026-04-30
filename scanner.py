@@ -74,17 +74,24 @@ def escanear_android():
             return []
 
         datos = json.loads(r.stdout)
+
+        # termux-wifi-scaninfo puede devolver lista de dicts o un solo dict
+        if isinstance(datos, dict):
+            datos = [datos]
+
         redes = []
         for d in datos:
-            pct = dbm_a_pct(int(d.get("level", -100)))
+            if not isinstance(d, dict):
+                continue  # ignorar entradas malformadas
+            pct   = dbm_a_pct(int(d.get("level", -100)))
             canal = frecuencia_a_canal(int(d.get("frequency", 0)))
             redes.append({
-                "ssid":       d.get("ssid", "Oculto") or "Oculto",
-                "bssid":      d.get("bssid", "N/A"),
-                "senal_pct":  pct,
-                "canal":      str(canal),
-                "seguridad":  clasificar_seguridad(d.get("capabilities", "")),
-                "raw_caps":   d.get("capabilities", ""),
+                "ssid":      d.get("ssid", "Oculto") or "Oculto",
+                "bssid":     d.get("bssid", "N/A"),
+                "senal_pct": pct,
+                "canal":     str(canal),
+                "seguridad": clasificar_seguridad(d.get("capabilities", "")),
+                "raw_caps":  d.get("capabilities", ""),
             })
         return redes
 
